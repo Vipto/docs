@@ -1,0 +1,95 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // User profile documents
+    match /users/{userId} {
+      allow read: if true;
+      allow create, update: if isAuthenticated();
+      allow delete: if false;
+    }
+    
+    // Workspaces
+    match /workspaces/{workspaceId} {
+      allow read: if true;
+      allow create, update, delete: if true;
+      
+      match /members/{memberId} {
+        allow read: if true;
+        allow write: if true;
+      }
+    }
+    
+    // Spaces (organizational containers)
+    match /spaces/{spaceId} {
+      allow read: if true;
+      allow create, update, delete: if true;
+      
+      match /members/{memberId} {
+        allow read: if true;
+        allow write: if true;
+      }
+    }
+    
+    // Pages
+    match /pages/{pageId} {
+      allow read: if true;
+      allow create, update, delete: if true;
+      
+      // Page version history
+      match /versions/{versionId} {
+        allow read: if true;
+        allow create: if true;
+        allow update, delete: if false; // Versions are immutable
+      }
+      
+      // Comments
+      match /comments/{commentId} {
+        allow read: if true;
+        allow create, update, delete: if true;
+      }
+      
+      // Attachments
+      match /attachments/{attachmentId} {
+        allow read: if true;
+        allow create, update, delete: if true;
+      }
+    }
+    
+    // User specific collections
+    match /userPreferences/{userId} {
+      allow read, write: if true;
+    }
+    
+    match /userFavorites/{userId}/pages/{pageId} {
+      allow read, write: if true;
+    }
+    
+    match /userRecentPages/{userId}/pages/{pageId} {
+      allow read, write: if true;
+    }
+    
+    // Notifications
+    match /notifications/{notificationId} {
+      allow read, write: if true;
+    }
+    
+    // Audit logs
+    match /auditLogs/{logId} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if false;
+    }
+  }
+}
+
+
